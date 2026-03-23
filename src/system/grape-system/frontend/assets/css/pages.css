@@ -1,0 +1,268 @@
+/* ── Detect Page ── */
+.upload-zone{
+  border:2px dashed var(--border);
+  border-radius:var(--radius);
+  padding:48px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s;
+  position:relative;
+}
+
+.upload-zone:hover,.upload-zone.over{
+  border-color:var(--accent);
+  background:rgba(124,58,237,.06);
+}
+
+.upload-zone input{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  cursor:pointer;
+}
+
+.u-icon{
+  font-size:48px;
+  margin-bottom:12px;
+}
+
+.u-hint{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7;
+}
+
+.u-hint strong{
+  color:var(--accent2);
+}
+
+.preview-wrap{
+  display:flex;
+  gap:24px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+
+.preview-img{
+  width:200px;
+  height:200px;
+  border-radius:12px;
+  object-fit:cover;
+  border:2px solid var(--border);
+  flex-shrink:0;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+
+.preview-info{
+  flex:1;
+  min-width:200px;
+}
+
+.result-card{
+  background:linear-gradient(135deg,var(--card2) 0%,var(--card) 100%);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;
+  position:relative;
+  overflow:hidden;
+}
+
+.result-card::before{
+  content:'';
+  position:absolute;
+  top:-40px;
+  right:-40px;
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  background:radial-gradient(circle,var(--result-color,var(--accent)) 0%,transparent 70%);
+  opacity:.12;
+}
+
+.result-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 20px;
+  border-radius:99px;
+  font-size:17px;
+  font-weight:800;
+  border:2px solid currentColor;
+  margin-bottom:14px;
+}
+
+.result-tip{
+  font-size:13px;
+  color:var(--muted2);
+  line-height:1.7;
+  margin-top:8px;
+}
+
+.conf-num{
+  font-size:32px;
+  font-weight:900;
+  letter-spacing:-1px;
+}
+
+.prob-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:9px;
+  font-size:12px;
+}
+
+.prob-lbl{
+  width:48px;
+  color:var(--muted);
+}
+
+.prob-bg{
+  flex:1;
+  height:8px;
+  background:#1a2535;
+  border-radius:99px;
+  overflow:hidden;
+}
+
+.prob-fill{
+  height:100%;
+  border-radius:99px;
+  transition:width .6s cubic-bezier(.4,0,.2,1);
+}
+
+.prob-val{
+  width:44px;
+  text-align:right;
+  font-weight:700;
+  color:var(--accent2);
+}
+
+.color-swatch{
+  width:40px;
+  height:40px;
+  border-radius:8px;
+  border:2px solid rgba(255,255,255,.1);
+  flex-shrink:0;
+}
+
+.channel-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* ── Step Indicator ── */
+.steps{
+  display:flex;
+  align-items:center;
+  gap:0;
+  margin-bottom:20px;
+}
+
+.step{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+}
+
+.step-dot{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:700;
+  flex-shrink:0;
+}
+
+.step-done .step-dot{
+  background:var(--c1);
+  color:#fff;
+}
+
+.step-active .step-dot{
+  background:var(--accent);
+  color:#fff;
+  box-shadow:0 0 12px var(--accent);
+}
+
+.step-wait .step-dot{
+  background:var(--card2);
+  color:var(--muted);
+  border:1px solid var(--border);
+}
+
+.step-line{
+  flex:1;
+  height:1px;
+  background:var(--border);
+  min-width:20px;
+}
+
+.step-line.done{
+  background:var(--c1);
+}
+
+/* ── History Page ── */
+.hist-item{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:12px 16px;
+  border-radius:10px;
+  background:var(--card2);
+  border:1px solid var(--border);
+  cursor:pointer;
+  transition:all .15s;
+}
+
+.hist-item:hover{
+  border-color:var(--accent);
+  background:rgba(124,58,237,.06);
+}
+
+.hist-thumb{
+  width:52px;
+  height:52px;
+  object-fit:cover;
+  border-radius:8px;
+  flex-shrink:0;
+}
+
+.hist-badge{
+  padding:2px 9px;
+  border-radius:99px;
+  font-size:11px;
+  font-weight:700;
+  border:1px solid currentColor;
+}
+
+.badge-0{
+  color:var(--c0);
+  border-color:var(--c0);
+  background:rgba(59,130,246,.12);
+}
+
+.badge-1{
+  color:var(--c1);
+  border-color:var(--c1);
+  background:rgba(16,185,129,.12);
+}
+
+.badge-2{
+  color:var(--c2);
+  border-color:var(--c2);
+  background:rgba(245,158,11,.12);
+}
+
+.badge-3{
+  color:var(--c3);
+  border-color:var(--c3);
+  background:rgba(239,68,68,.12);
+}

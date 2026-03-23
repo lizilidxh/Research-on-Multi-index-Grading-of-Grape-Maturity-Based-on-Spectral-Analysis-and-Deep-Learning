@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>葡萄成熟度智能识别系统</title>
+  <!-- 第三方库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <!-- 样式文件 -->
+  <link rel="stylesheet" href="assets/css/reset.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <!-- 侧边栏 -->
+      <aside class="sidebar">
+        <div class="logo">
+          <span class="logo-icon">🍇</span>
+          <h1>葡萄成熟度<br>智能识别系统</h1>
+          <p>GRAPE MATURITY AI v2.0</p>
+        </div>
+
+        <nav class="nav">
+          <div v-for="item in navItems" :key="item.id"
+               class="nav-item" :class="{active:page===item.id}"
+               @click="page=item.id">
+            <span class="nav-icon">{{item.icon}}</span>
+            <span>{{item.label}}</span>
+          </div>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="txt-sm">
+            <span class="conn-dot" :class="connClass"></span>
+            <span :style="{color: connected?'#10b981':connLoading?'#f59e0b':'#ef4444'}">{{connText}}</span>
+          </div>
+          <input class="url-inp" v-model="apiBase" placeholder="http://localhost:5000"/>
+          <button class="btn-sm-link" @click="checkConn">🔄 重新连接</button>
+        </div>
+      </aside>
+
+      <!-- 主内容区 -->
+      <main class="main">
+        <!-- 图像识别页 -->
+        <div v-if="page==='detect'">
+          <div class="ph">
+            <h2>🔬 图像识别</h2>
+            <p>上传葡萄照片，AI 自动识别成熟度等级</p>
+          </div>
+          <div class="pc">
+            <!-- 步骤指示 -->
+            <div class="steps">
+              <div class="step" :class="stepClass(1)">
+                <div class="step-dot">1</div>
+                <span :style="{color:stepColor(1)}">上传图片</span>
+              </div>
+              <div class="step-line" :class="{done:step>=2}"></div>
+              <div class="step" :class="stepClass(2)">
+                <div class="step-dot">2</div>
+                <span :style="{color:stepColor(2)}">AI 分析</span>
+              </div>
+              <div class="step-line" :class="{done:step>=3}"></div>
+              <div class="step" :class="stepClass(3)">
+                <div class="step-dot">3</div>
+                <span :style="{color:stepColor(3)}">查看结果</span>
+              </div>
+            </div>
+
+            <!-- 上传区 -->
+            <div class="card" v-if="!imgResult">
+              <div class="card-title">📸 选择葡萄图片</div>
+              <div class="upload-zone" :class="{over:dragging}"
+                   @dragover.prevent="dragging=true"
+                   @dragleave="dragging=false"
+                   @drop.prevent="onDrop"
+                   @click="$refs.imgInput.click()">
+                <input ref="imgInput" type="file" accept="image/*" @change="onImgChange"/>
+                <div v-if="!previewUrl">
+                  <div class="u-icon">🍇</div>
+                  <div class="u-hint">
+                    <strong>点击选择</strong> 或拖拽图片到此<br>
+                    支持 JPG / PNG / BMP / WEBP<br>
+                    <span class="txt-sm txt-mu">建议上传正面清晰的葡萄特写照片</span>
+                  </div>
+                </div>
+                <div v-else style="pointer-events:none">
+                  <img :src="previewUrl" style="max-height:180px;max-width:100%;border-radius:10px;"/>
+                  <div class="txt-sm txt-mu">{{imgFile.name}} · {{(imgFile.size/1024).toFixed(1)}} KB</div>
+                </div>
+              </div>
+
+              <div class="row mt" style="justify-content:center;gap:12px">
+                <button v-if="previewUrl" class="btn btn-ghost" @click="resetImg">重新选择</button>
+                <button v-if="previewUrl" class="btn btn-primary" :disabled="predicting" @click="submitImg">
+                  <span v-if="predicting"><span class="spin"></span> 识别中…</span>
+                  <span v-else>🚀 开始识别</span>
+                </button>
+              </div>
+
+              <div v-if="imgError" class="alert alert-err mt">⚠️ {{imgError}}</div>
+            </div>
+
+            <!-- 结果展示 -->
+            <div v-if="imgResult">
+              <div class="preview-wrap">
+                <!-- 左：原图 + 重新检测 -->
+                <div class="col" style="align-items:center">
+                  <img :src="previewUrl" class="preview-img"/>
+                  <div class="txt-sm txt-mu">{{imgFile?.name}}</div>
+                  <button class="btn btn-ghost btn-sm2" style="width:100%;padding:8px 0;margin-top:4px"
+                          @click="resetImg">🔄 重新检测</button>
+                </div>
+
+                <!-- 右：结果 -->
+                <div style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:14px">
+                  <!-- 主结果 -->
+                  <div class="result-card" :style="{'--result-color': matColors[imgResult.label]}">
+                    <div>
+                      <span class="result-badge"
+                            :style="{color:matColors[imgResult.label], borderColor:matColors[imgResult.label]}">
+                        {{imgResult.icon}} {{imgResult.name}}
+                      </span>
+                    </div>
+                    <div class="row" style="align-items:baseline;gap:8px">
+                      <div class="conf-num" :style="{color:matColors[imgResult.label]}">
+                        {{(imgResult.confidence*100).toFixed(1)}}%
+                      </div>
+                      <div class="txt-sm txt-mu">识别置信度</div>
+                    </div>
+                    <div class="result-tip">💡 {{imgResult.tip}}</div>
+                    <div class="txt-sm txt-mu" style="margin-top:8px">推理耗时：{{imgResult.elapsed_ms}} ms</div>
+                  </div>
+
+                  <!-- 各类概率 -->
+                  <div class="card" style="padding:16px 20px">
+                    <div class="card-title" style="margin-bottom:12px;font-size:12px">各等级概率分布</div>
+                    <div v-for="(name,i) in matNames" :key="i" class="prob-row">
+                      <div class="prob-lbl">{{name}}</div>
+                      <div class="prob-bg">
+                        <div class="prob-fill"
+                             :style="{width:(imgResult.probabilities[name]*100)+'%',
+                                      background:matColors[i]}"></div>
+                      </div>
+                      <div class="prob-val">{{(imgResult.probabilities[name]*100).toFixed(1)}}%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 图像颜色分析 -->
+              <div class="card mt">
+                <div class="card-title">🎨 图像颜色分析（HSV / RGB）</div>
+                <div class="g3">
+                  <div>
+                    <div class="txt-sm txt-mu mb4" style="margin-bottom:6px">色相 Hue（H）</div>
+                    <div class="row">
+                      <div class="color-swatch"
+                           :style="{background:`hsl(${imgResult.image_analysis.h_mean*2},80%,45%)`}"></div>
+                      <div>
+                        <div style="font-size:18px;font-weight:700;color:var(--accent2)">
+                          {{imgResult.image_analysis.h_mean.toFixed(0)}}
+                        </div>
+                        <div class="txt-sm txt-mu">OpenCV H值（0-179）</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="txt-sm txt-mu" style="margin-bottom:6px">饱和度 Saturation（S）</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--accent2)">
+                      {{imgResult.image_analysis.s_mean.toFixed(0)}}
+                    </div>
+                    <div class="prog-wrap" style="margin-top:6px">
+                      <div class="prog-fill" :style="{width:(imgResult.image_analysis.s_mean/255*100)+'%'}"></div>
+                    </div>
+                    <div class="txt-sm txt-mu" style="margin-top:3px">{{(imgResult.image_analysis.s_mean/255*100).toFixed(0)}}%</div>
+                  </div>
+                  <div>
+                    <div class="txt-sm txt-mu" style="margin-bottom:6px">明度 Value（V）</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--accent2)">
+                      {{imgResult.image_analysis.v_mean.toFixed(0)}}
+                    </div>
+                    <div class="prog-wrap" style="margin-top:6px">
+                      <div class="prog-fill" :style="{width:(imgResult.image_analysis.v_mean/255*100)+'%'}"></div>
+                    </div>
+                    <div class="txt-sm txt-mu" style="margin-top:3px">{{(imgResult.image_analysis.v_mean/255*100).toFixed(0)}}%</div>
+                  </div>
+                </div>
+                <hr class="divider"/>
+                <div class="g3">
+                  <div class="channel-row">
+                    <div class="color-swatch" :style="{background:`rgb(${imgResult.image_analysis.r_mean},0,0)`}"></div>
+                    <div>
+                      <div class="txt-ac" style="font-weight:700">R {{imgResult.image_analysis.r_mean.toFixed(0)}}</div>
+                      <div class="txt-mu txt-sm">红色通道</div>
+                    </div>
+                  </div>
+                  <div class="channel-row">
+                    <div class="color-swatch" :style="{background:`rgb(0,${imgResult.image_analysis.g_mean},0)`}"></div>
+                    <div>
+                      <div class="txt-ac" style="font-weight:700">G {{imgResult.image_analysis.g_mean.toFixed(0)}}</div>
+                      <div class="txt-mu txt-sm">绿色通道</div>
+                    </div>
+                  </div>
+                  <div class="channel-row">
+                    <div class="color-swatch" :style="{background:`rgb(0,0,${imgResult.image_analysis.b_mean})`}"></div>
+                    <div>
+                      <div class="txt-ac" style="font-weight:700">B {{imgResult.image_analysis.b_mean.toFixed(0)}}</div>
+                      <div class="txt-mu txt-sm">蓝色通道</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="txt-sm txt-mu mt" style="padding:10px;background:var(--card2);border-radius:8px;line-height:1.7">
+                  特征维度：<span class="txt-ac">{{imgResult.image_analysis.feature_dim}} 维</span>（HSV统计量6维 + BGR统计量6维 + HSV直方图18维 + Sobel纹理8维）
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 历史记录页 -->
+        <div v-if="page==='history'">
+          <div class="ph">
+            <h2>📋 历史记录</h2>
+            <p>本次会话共识别 {{history.length}} 张图片</p>
+          </div>
+          <div class="pc">
+            <div v-if="!history.length" class="alert alert-info">
+              ℹ️ 暂无识别记录，请前往「图像识别」页面上传图片
+            </div>
+
+            <div class="g3" v-if="history.length">
+              <div class="hist-item" v-for="(item,i) in history" :key="i"
+                   @click="viewHistory(item)">
+                <img :src="item.previewUrl" class="hist-thumb"/>
+                <div style="flex:1;min-width:0">
+                  <div class="row" style="margin-bottom:4px">
+                    <span class="hist-badge" :class="'badge-'+item.result.label">
+                      {{item.result.icon}} {{item.result.name}}
+                    </span>
+                  </div>
+                  <div class="txt-sm txt-mu">置信度 {{(item.result.confidence*100).toFixed(1)}}%</div>
+                  <div class="txt-sm txt-mu" style="font-size:10px;margin-top:2px">{{item.time}}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 统计图 -->
+            <div class="g2" v-if="history.length>=2">
+              <div class="card">
+                <div class="card-title">成熟度分布</div>
+                <div class="chart-box"><canvas ref="histDonut"></canvas></div>
+              </div>
+              <div class="card">
+                <div class="card-title">置信度趋势</div>
+                <div class="chart-box"><canvas ref="histLine"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 系统总览页 -->
+        <div v-if="page==='overview'">
+          <div class="ph">
+            <h2>📊 系统总览</h2>
+            <p>模型信息与技术方案</p>
+          </div>
+          <div class="pc">
+            <div class="g4">
+              <div class="tile"><div class="tile-val">{{sysStats.total||2160}}</div><div class="tile-lbl">训练样本数</div></div>
+              <div class="tile"><div class="tile-val">87.73%</div><div class="tile-lbl">高光谱模型准确率</div></div>
+              <div class="tile"><div class="tile-val">38维</div><div class="tile-lbl">图像特征维度</div></div>
+              <div class="tile"><div class="tile-val">4类</div><div class="tile-lbl">成熟度等级</div></div>
+            </div>
+
+            <div class="g2">
+              <!-- 模型流程 -->
+              <div class="card">
+                <div class="card-title">🤖 图像识别流程</div>
+                <div style="font-size:13px;color:var(--muted2);line-height:2.2">
+                  <div v-for="(step,i) in imgPipeline" :key="i" style="display:flex;gap:10px;align-items:flex-start">
+                    <span style="color:var(--accent2);font-weight:700;flex-shrink:0">{{i+1}}.</span>
+                    <span>{{step}}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 成熟度说明 -->
+              <div class="card">
+                <div class="card-title">🍇 四大成熟度等级</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div v-for="(item,i) in matDescriptions" :key="i"
+                       style="display:flex;align-items:flex-start;gap:12px">
+                    <span style="font-size:22px;flex-shrink:0">{{item.icon}}</span>
+                    <div>
+                      <div style="font-weight:700;font-size:13px" :style="{color:matColors[i]}">
+                        {{matNames[i]}}
+                      </div>
+                      <div class="txt-sm txt-mu" style="line-height:1.6;margin-top:2px">{{item.desc}}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 颜色特征说明 -->
+            <div class="card">
+              <div class="card-title">🎨 各成熟度颜色特征参考</div>
+              <div class="g4">
+                <div v-for="(item,i) in colorFeatures" :key="i"
+                     style="padding:14px;background:var(--card2);border-radius:10px;border:1px solid var(--border)">
+                  <div class="row" style="margin-bottom:10px">
+                    <div style="width:14px;height:14px;border-radius:50%"
+                         :style="{background:matColors[i]}"></div>
+                    <span style="font-weight:700;font-size:13px" :style="{color:matColors[i]}">{{matNames[i]}}</span>
+                  </div>
+                  <div v-for="(feat,fi) in item" :key="fi" class="txt-sm txt-mu"
+                       style="margin-bottom:4px">
+                    {{feat}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 使用说明页 -->
+        <div v-if="page==='help'">
+          <div class="ph">
+            <h2>ℹ️ 使用说明</h2>
+            <p>系统使用指南与注意事项</p>
+          </div>
+          <div class="pc">
+            <div class="card">
+              <div class="card-title">🚀 快速开始</div>
+              <div style="background:#060c14;border-radius:10px;padding:18px;font-size:12px;font-family:monospace;color:#a5f3fc;line-height:2.2">
+                <div style="color:#64748b"># 步骤1：安装依赖</div>
+                <div>pip install flask opencv-python pillow scikit-learn numpy pandas scipy</div>
+                <br>
+                <div style="color:#64748b"># 步骤2：启动后端（保持终端运行）</div>
+                <div>cd src/system/backend</div>
+                <div>python image_app.py</div>
+                <br>
+                <div style="color:#64748b"># 步骤3：浏览器打开前端</div>
+                <div>双击 src/system/frontend/grape_system.html</div>
+              </div>
+            </div>
+            <div class="g2">
+              <div class="card">
+                <div class="card-title">📸 拍照建议</div>
+                <div style="font-size:13px;color:var(--muted2);line-height:2">
+                  <div>✅ 正面拍摄，葡萄占画面60%以上</div>
+                  <div>✅ 自然光线，避免强烈反光</div>
+                  <div>✅ 清晰对焦，背景简洁</div>
+                  <div>✅ 单串或单粒葡萄特写</div>
+                  <div>❌ 避免夜晚强光闪照</div>
+                  <div>❌ 避免图片模糊或遮挡</div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-title">⚠️ 重要说明</div>
+                <div style="font-size:13px;color:var(--muted2);line-height:2">
+                  <div>• 图像模型基于颜色特征识别</div>
+                  <div>• 实际准确率受光照和品种影响</div>
+                  <div>• 高光谱模型准确率更高（87.7%）</div>
+                  <div>• 图像识别作为快速辅助判断</div>
+                  <div>• 建议结合人工判断综合评估</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 脚本文件（按依赖顺序引入） -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

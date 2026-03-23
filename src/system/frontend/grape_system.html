@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>葡萄成熟度智能识别系统</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06090f;--surface:#0d1117;--card:#111827;--card2:#161f2e;
+  --border:#1e2d45;--text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --accent:#7c3aed;--accent2:#a78bfa;--accent3:#ddd6fe;
+  --c0:#3b82f6;--c1:#10b981;--c2:#f59e0b;--c3:#ef4444;
+  --radius:14px;--r-sm:8px;--shadow:0 8px 32px rgba(0,0,0,.5);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── Layout ── */
+.layout{display:flex;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.logo{padding:22px 18px;border-bottom:1px solid var(--border)}
+.logo-icon{font-size:36px;display:block;margin-bottom:8px}
+.logo h1{font-size:14px;font-weight:800;color:var(--accent2);line-height:1.5}
+.logo p{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.5px}
+.nav{flex:1;padding:10px 0}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:11px 18px;
+  font-size:13px;color:var(--muted);cursor:pointer;
+  border-left:3px solid transparent;transition:all .15s;
+}
+.nav-item:hover{color:var(--text);background:rgba(124,58,237,.08)}
+.nav-item.active{color:var(--accent2);background:rgba(124,58,237,.14);border-left-color:var(--accent)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sidebar-bottom{padding:14px;border-top:1px solid var(--border)}
+.conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.conn-ok{background:#10b981;box-shadow:0 0 6px #10b981}
+.conn-err{background:#ef4444}
+.conn-loading{background:#f59e0b;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.url-inp{
+  width:100%;background:#080d14;border:1px solid var(--border);
+  color:var(--text);padding:6px 10px;border-radius:6px;
+  font-size:11px;margin-top:8px;
+}
+.url-inp:focus{outline:none;border-color:var(--accent)}
+.btn-sm-link{
+  width:100%;margin-top:6px;padding:6px;border-radius:6px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--muted2);font-size:11px;cursor:pointer;transition:all .15s;
+}
+.btn-sm-link:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* ── Main ── */
+.main{flex:1;overflow-y:auto}
+
+/* ── Page Header ── */
+.ph{
+  background:linear-gradient(135deg,#0b0d20 0%,#111827 100%);
+  border-bottom:1px solid var(--border);
+  padding:24px 32px;
+}
+.ph h2{font-size:20px;font-weight:800;color:var(--accent2)}
+.ph p{font-size:12px;color:var(--muted);margin-top:5px}
+
+.pc{padding:24px 32px;display:flex;flex-direction:column;gap:20px}
+
+/* ── Card ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px}
+.card-title{font-size:13px;font-weight:700;color:var(--accent2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* ── Grid ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* ── Stat tile ── */
+.tile{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.tile-val{font-size:22px;font-weight:800;color:var(--accent2)}
+.tile-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ── Buttons ── */
+.btn{padding:10px 22px;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#6d28d9;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* ── Upload ── */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:var(--radius);
+  padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;
+  position:relative;
+}
+.upload-zone:hover,.upload-zone.over{border-color:var(--accent);background:rgba(124,58,237,.06)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.u-icon{font-size:48px;margin-bottom:12px}
+.u-hint{color:var(--muted);font-size:13px;line-height:1.7}
+.u-hint strong{color:var(--accent2)}
+
+/* ── Preview ── */
+.preview-wrap{
+  display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;
+}
+.preview-img{
+  width:200px;height:200px;border-radius:12px;object-fit:cover;
+  border:2px solid var(--border);flex-shrink:0;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+.preview-info{flex:1;min-width:200px}
+
+/* ── Result card ── */
+.result-card{
+  background:linear-gradient(135deg,var(--card2) 0%,var(--card) 100%);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;position:relative;overflow:hidden;
+}
+.result-card::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:140px;height:140px;border-radius:50%;
+  background:radial-gradient(circle,var(--result-color,var(--accent)) 0%,transparent 70%);
+  opacity:.12;
+}
+.result-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:99px;font-size:17px;font-weight:800;
+  border:2px solid currentColor;margin-bottom:14px;
+}
+.result-tip{font-size:13px;color:var(--muted2);line-height:1.7;margin-top:8px}
+.conf-num{font-size:32px;font-weight:900;letter-spacing:-1px}
+
+/* ── Prob bars ── */
+.prob-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12px}
+.prob-lbl{width:48px;color:var(--muted)}
+.prob-bg{flex:1;height:8px;background:#1a2535;border-radius:99px;overflow:hidden}
+.prob-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.prob-val{width:44px;text-align:right;font-weight:700;color:var(--accent2)}
+
+/* ── Progress ── */
+.prog-wrap{background:#1a2535;border-radius:99px;height:5px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .4s}
+
+/* ── Image analysis ── */
+.color-swatch{
+  width:40px;height:40px;border-radius:8px;
+  border:2px solid rgba(255,255,255,.1);flex-shrink:0;
+}
+.channel-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+
+/* ── Alert ── */
+.alert{padding:12px 16px;border-radius:var(--r-sm);font-size:13px;display:flex;align-items:flex-start;gap:10px}
+.alert-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+.alert-ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7}
+.alert-info{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);color:#c4b5fd}
+
+/* ── Spinner ── */
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent2);animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── History ── */
+.hist-item{
+  display:flex;align-items:center;gap:14px;padding:12px 16px;
+  border-radius:10px;background:var(--card2);border:1px solid var(--border);
+  cursor:pointer;transition:all .15s;
+}
+.hist-item:hover{border-color:var(--accent);background:rgba(124,58,237,.06)}
+.hist-thumb{width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0}
+.hist-badge{
+  padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid currentColor;
+}
+.badge-0{color:var(--c0);border-color:var(--c0);background:rgba(59,130,246,.12)}
+.badge-1{color:var(--c1);border-color:var(--c1);background:rgba(16,185,129,.12)}
+.badge-2{color:var(--c2);border-color:var(--c2);background:rgba(245,158,11,.12)}
+.badge-3{color:var(--c3);border-color:var(--c3);background:rgba(239,68,68,.12)}
+
+/* ── Chart ── */
+.chart-box{height:220px;position:relative}
+
+/* ── Misc ── */
+.row{display:flex;align-items:center;gap:12px}
+.col{display:flex;flex-direction:column;gap:8px}
+.sp{flex:1}
+.mt{margin-top:16px}
+.txt-sm{font-size:12px}
+.txt-mu{color:var(--muted)}
+.txt-ac{color:var(--accent2)}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.tag{
+  display:inline-block;padding:3px 10px;border-radius:99px;
+  font-size:11px;font-weight:600;
+  background:rgba(124,58,237,.15);color:var(--accent2);
+  border:1px solid rgba(124,58,237,.3);
+}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;background:var(--card2);padding:4px;border-radius:var(--r-sm);width:fit-content}
+.tab{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+
+/* ── Step indicator ── */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:20px}
+.step{display:flex;align-items:center;gap:8px;font-size:12px}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.step-done .step-dot{background:var(--c1);color:#fff}
+.step-active .step-dot{background:var(--accent);color:#fff;box-shadow:0 0 12px var(--accent)}
+.step-wait .step-dot{background:var(--card2);color:var(--muted);border:1px solid var(--border)}
+.step-line{flex:1;height:1px;background:var(--border);min-width:20px}
+.step-line.done{background:var(--c1)}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="layout">
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <span class="logo-icon">🍇</span>
+    <h1>葡萄成熟度<br>智能识别系统</h1>
+    <p>GRAPE MATURITY AI v2.0</p>
+  </div>
+
+  <nav class="nav">
+    <div v-for="item in navItems" :key="item.id"
+         class="nav-item" :class="{active:page===item.id}"
+         @click="page=item.id">
+      <span class="nav-icon">{{item.icon}}</span>
+      <span>{{item.label}}</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="txt-sm">
+      <span class="conn-dot" :class="connClass"></span>
+      <span :style="{color: connected?'#10b981':connLoading?'#f59e0b':'#ef4444'}">{{connText}}</span>
+    </div>
+    <input class="url-inp" v-model="apiBase" placeholder="http://localhost:5000"/>
+    <button class="btn-sm-link" @click="checkConn">🔄 重新连接</button>
+  </div>
+</aside>
+
+<!-- ══════════ MAIN ══════════ -->
+<main class="main">
+
+  <!-- ── 图像识别页 ──────────────────────────────── -->
+  <div v-if="page==='detect'">
+    <div class="ph">
+      <h2>🔬 图像识别</h2>
+      <p>上传葡萄照片，AI 自动识别成熟度等级</p>
+    </div>
+    <div class="pc">
+
+      <!-- 步骤指示 -->
+      <div class="steps">
+        <div class="step" :class="stepClass(1)">
+          <div class="step-dot">1</div>
+          <span :style="{color:stepColor(1)}">上传图片</span>
+        </div>
+        <div class="step-line" :class="{done:step>=2}"></div>
+        <div class="step" :class="stepClass(2)">
+          <div class="step-dot">2</div>
+          <span :style="{color:stepColor(2)}">AI 分析</span>
+        </div>
+        <div class="step-line" :class="{done:step>=3}"></div>
+        <div class="step" :class="stepClass(3)">
+          <div class="step-dot">3</div>
+          <span :style="{color:stepColor(3)}">查看结果</span>
+        </div>
+      </div>
+
+      <!-- 上传区 -->
+      <div class="card" v-if="!imgResult">
+        <div class="card-title">📸 选择葡萄图片</div>
+        <div class="upload-zone" :class="{over:dragging}"
+             @dragover.prevent="dragging=true"
+             @dragleave="dragging=false"
+             @drop.prevent="onDrop"
+             @click="$refs.imgInput.click()">
+          <input ref="imgInput" type="file" accept="image/*" @change="onImgChange"/>
+          <div v-if="!previewUrl">
+            <div class="u-icon">🍇</div>
+            <div class="u-hint">
+              <strong>点击选择</strong> 或拖拽图片到此<br>
+              支持 JPG / PNG / BMP / WEBP<br>
+              <span class="txt-sm txt-mu" style="margin-top:4px;display:inline-block">建议上传正面清晰的葡萄特写照片</span>
+            </div>
+          </div>
+          <div v-else style="pointer-events:none">
+            <img :src="previewUrl" style="max-height:180px;max-width:100%;border-radius:10px;"/>
+            <div class="txt-sm txt-mu" style="margin-top:10px">{{imgFile.name}} · {{(imgFile.size/1024).toFixed(1)}} KB</div>
+          </div>
+        </div>
+
+        <div class="row mt" style="justify-content:center;gap:12px">
+          <button v-if="previewUrl" class="btn btn-ghost" @click="resetImg">重新选择</button>
+          <button v-if="previewUrl" class="btn btn-primary" :disabled="predicting" @click="submitImg">
+            <span v-if="predicting"><span class="spin"></span> 识别中…</span>
+            <span v-else>🚀 开始识别</span>
+          </button>
+        </div>
+
+        <div v-if="imgError" class="alert alert-err mt">⚠️ {{imgError}}</div>
+      </div>
+
+      <!-- 结果展示 -->
+      <div v-if="imgResult">
+        <div class="preview-wrap">
+
+          <!-- 左：原图 + 重新检测 -->
+          <div class="col" style="align-items:center">
+            <img :src="previewUrl" class="preview-img"/>
+            <div class="txt-sm txt-mu">{{imgFile?.name}}</div>
+            <button class="btn btn-ghost btn-sm2" style="width:100%;padding:8px 0;margin-top:4px"
+                    @click="resetImg">🔄 重新检测</button>
+          </div>
+
+          <!-- 右：结果 -->
+          <div style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:14px">
+
+            <!-- 主结果 -->
+            <div class="result-card"
+                 :style="{'--result-color': matColors[imgResult.label]}">
+              <div>
+                <span class="result-badge"
+                      :style="{color:matColors[imgResult.label], borderColor:matColors[imgResult.label]}">
+                  {{imgResult.icon}} {{imgResult.name}}
+                </span>
+              </div>
+              <div class="row" style="align-items:baseline;gap:8px">
+                <div class="conf-num" :style="{color:matColors[imgResult.label]}">
+                  {{(imgResult.confidence*100).toFixed(1)}}%
+                </div>
+                <div class="txt-sm txt-mu">识别置信度</div>
+              </div>
+              <div class="result-tip">💡 {{imgResult.tip}}</div>
+              <div class="txt-sm txt-mu" style="margin-top:8px">推理耗时：{{imgResult.elapsed_ms}} ms</div>
+            </div>
+
+            <!-- 各类概率 -->
+            <div class="card" style="padding:16px 20px">
+              <div class="card-title" style="margin-bottom:12px;font-size:12px">各等级概率分布</div>
+              <div v-for="(name,i) in matNames" :key="i" class="prob-row">
+                <div class="prob-lbl">{{name}}</div>
+                <div class="prob-bg">
+                  <div class="prob-fill"
+                       :style="{width:(imgResult.probabilities[name]*100)+'%',
+                                background:matColors[i]}"></div>
+                </div>
+                <div class="prob-val">{{(imgResult.probabilities[name]*100).toFixed(1)}}%</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 图像颜色分析 -->
+        <div class="card mt">
+          <div class="card-title">🎨 图像颜色分析（HSV / RGB）</div>
+          <div class="g3">
+            <div>
+              <div class="txt-sm txt-mu mb4" style="margin-bottom:6px">色相 Hue（H）</div>
+              <div class="row">
+                <div class="color-swatch"
+                     :style="{background:`hsl(${imgResult.image_analysis.h_mean*2},80%,45%)`}"></div>
+                <div>
+                  <div style="font-size:18px;font-weight:700;color:var(--accent2)">
+                    {{imgResult.image_analysis.h_mean.toFixed(0)}}
+                  </div>
+                  <div class="txt-sm txt-mu">OpenCV H值（0-179）</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="txt-sm txt-mu" style="margin-bottom:6px">饱和度 Saturation（S）</div>
+              <div style="font-size:18px;font-weight:700;color:var(--accent2)">
+                {{imgResult.image_analysis.s_mean.toFixed(0)}}
+              </div>
+              <div class="prog-wrap" style="margin-top:6px">
+                <div class="prog-fill" :style="{width:(imgResult.image_analysis.s_mean/255*100)+'%'}"></div>
+              </div>
+              <div class="txt-sm txt-mu" style="margin-top:3px">{{(imgResult.image_analysis.s_mean/255*100).toFixed(0)}}%</div>
+            </div>
+            <div>
+              <div class="txt-sm txt-mu" style="margin-bottom:6px">明度 Value（V）</div>
+              <div style="font-size:18px;font-weight:700;color:var(--accent2)">
+                {{imgResult.image_analysis.v_mean.toFixed(0)}}
+              </div>
+              <div class="prog-wrap" style="margin-top:6px">
+                <div class="prog-fill" :style="{width:(imgResult.image_analysis.v_mean/255*100)+'%'}"></div>
+              </div>
+              <div class="txt-sm txt-mu" style="margin-top:3px">{{(imgResult.image_analysis.v_mean/255*100).toFixed(0)}}%</div>
+            </div>
+          </div>
+          <hr class="divider"/>
+          <div class="g3">
+            <div class="channel-row">
+              <div class="color-swatch" :style="{background:`rgb(${imgResult.image_analysis.r_mean},0,0)`}"></div>
+              <div>
+                <div class="txt-ac" style="font-weight:700">R {{imgResult.image_analysis.r_mean.toFixed(0)}}</div>
+                <div class="txt-mu txt-sm">红色通道</div>
+              </div>
+            </div>
+            <div class="channel-row">
+              <div class="color-swatch" :style="{background:`rgb(0,${imgResult.image_analysis.g_mean},0)`}"></div>
+              <div>
+                <div class="txt-ac" style="font-weight:700">G {{imgResult.image_analysis.g_mean.toFixed(0)}}</div>
+                <div class="txt-mu txt-sm">绿色通道</div>
+              </div>
+            </div>
+            <div class="channel-row">
+              <div class="color-swatch" :style="{background:`rgb(0,0,${imgResult.image_analysis.b_mean})`}"></div>
+              <div>
+                <div class="txt-ac" style="font-weight:700">B {{imgResult.image_analysis.b_mean.toFixed(0)}}</div>
+                <div class="txt-mu txt-sm">蓝色通道</div>
+              </div>
+            </div>
+          </div>
+          <div class="txt-sm txt-mu mt" style="padding:10px;background:var(--card2);border-radius:8px;line-height:1.7">
+            特征维度：<span class="txt-ac">{{imgResult.image_analysis.feature_dim}} 维</span>（HSV统计量6维 + BGR统计量6维 + HSV直方图18维 + Sobel纹理8维）
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /detect -->
+
+  <!-- ── 历史记录 ────────────────────────────────── -->
+  <div v-if="page==='history'">
+    <div class="ph">
+      <h2>📋 历史记录</h2>
+      <p>本次会话共识别 {{history.length}} 张图片</p>
+    </div>
+    <div class="pc">
+      <div v-if="!history.length" class="alert alert-info">
+        ℹ️ 暂无识别记录，请前往「图像识别」页面上传图片
+      </div>
+
+      <div class="g3" v-if="history.length">
+        <div class="hist-item" v-for="(item,i) in history" :key="i"
+             @click="viewHistory(item)">
+          <img :src="item.previewUrl" class="hist-thumb"/>
+          <div style="flex:1;min-width:0">
+            <div class="row" style="margin-bottom:4px">
+              <span class="hist-badge" :class="'badge-'+item.result.label">
+                {{item.result.icon}} {{item.result.name}}
+              </span>
+            </div>
+            <div class="txt-sm txt-mu">置信度 {{(item.result.confidence*100).toFixed(1)}}%</div>
+            <div class="txt-sm txt-mu" style="font-size:10px;margin-top:2px">{{item.time}}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 统计图 -->
+      <div class="g2" v-if="history.length>=2">
+        <div class="card">
+          <div class="card-title">成熟度分布</div>
+          <div class="chart-box"><canvas ref="histDonut"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">置信度趋势</div>
+          <div class="chart-box"><canvas ref="histLine"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /history -->
+
+  <!-- ── 系统总览 ────────────────────────────────── -->
+  <div v-if="page==='overview'">
+    <div class="ph">
+      <h2>📊 系统总览</h2>
+      <p>模型信息与技术方案</p>
+    </div>
+    <div class="pc">
+      <div class="g4">
+        <div class="tile"><div class="tile-val">{{sysStats.total||2160}}</div><div class="tile-lbl">训练样本数</div></div>
+        <div class="tile"><div class="tile-val">87.73%</div><div class="tile-lbl">高光谱模型准确率</div></div>
+        <div class="tile"><div class="tile-val">38维</div><div class="tile-lbl">图像特征维度</div></div>
+        <div class="tile"><div class="tile-val">4类</div><div class="tile-lbl">成熟度等级</div></div>
+      </div>
+
+      <div class="g2">
+        <!-- 模型流程 -->
+        <div class="card">
+          <div class="card-title">🤖 图像识别流程</div>
+          <div style="font-size:13px;color:var(--muted2);line-height:2.2">
+            <div v-for="(step,i) in imgPipeline" :key="i" style="display:flex;gap:10px;align-items:flex-start">
+              <span style="color:var(--accent2);font-weight:700;flex-shrink:0">{{i+1}}.</span>
+              <span>{{step}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 成熟度说明 -->
+        <div class="card">
+          <div class="card-title">🍇 四大成熟度等级</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div v-for="(item,i) in matDescriptions" :key="i"
+                 style="display:flex;align-items:flex-start;gap:12px">
+              <span style="font-size:22px;flex-shrink:0">{{item.icon}}</span>
+              <div>
+                <div style="font-weight:700;font-size:13px" :style="{color:matColors[i]}">
+                  {{matNames[i]}}
+                </div>
+                <div class="txt-sm txt-mu" style="line-height:1.6;margin-top:2px">{{item.desc}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 颜色特征说明 -->
+      <div class="card">
+        <div class="card-title">🎨 各成熟度颜色特征参考</div>
+        <div class="g4">
+          <div v-for="(item,i) in colorFeatures" :key="i"
+               style="padding:14px;background:var(--card2);border-radius:10px;border:1px solid var(--border)">
+            <div class="row" style="margin-bottom:10px">
+              <div style="width:14px;height:14px;border-radius:50%"
+                   :style="{background:matColors[i]}"></div>
+              <span style="font-weight:700;font-size:13px" :style="{color:matColors[i]}">{{matNames[i]}}</span>
+            </div>
+            <div v-for="(feat,fi) in item" :key="fi" class="txt-sm txt-mu"
+                 style="margin-bottom:4px">
+              {{feat}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /overview -->
+
+  <!-- ── 说明 ───────────────────────────────────── -->
+  <div v-if="page==='help'">
+    <div class="ph">
+      <h2>ℹ️ 使用说明</h2>
+      <p>系统使用指南与注意事项</p>
+    </div>
+    <div class="pc">
+      <div class="card">
+        <div class="card-title">🚀 快速开始</div>
+        <div style="background:#060c14;border-radius:10px;padding:18px;font-size:12px;font-family:monospace;color:#a5f3fc;line-height:2.2">
+          <div style="color:#64748b"># 步骤1：安装依赖</div>
+          <div>pip install flask opencv-python pillow scikit-learn numpy pandas scipy</div>
+          <br>
+          <div style="color:#64748b"># 步骤2：启动后端（保持终端运行）</div>
+          <div>cd src/system/backend</div>
+          <div>python image_app.py</div>
+          <br>
+          <div style="color:#64748b"># 步骤3：浏览器打开前端</div>
+          <div>双击 src/system/frontend/grape_system.html</div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">📸 拍照建议</div>
+          <div style="font-size:13px;color:var(--muted2);line-height:2">
+            <div>✅ 正面拍摄，葡萄占画面60%以上</div>
+            <div>✅ 自然光线，避免强烈反光</div>
+            <div>✅ 清晰对焦，背景简洁</div>
+            <div>✅ 单串或单粒葡萄特写</div>
+            <div>❌ 避免夜晚强光闪照</div>
+            <div>❌ 避免图片模糊或遮挡</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚠️ 重要说明</div>
+          <div style="font-size:13px;color:var(--muted2);line-height:2">
+            <div>• 图像模型基于颜色特征识别</div>
+            <div>• 实际准确率受光照和品种影响</div>
+            <div>• 高光谱模型准确率更高（87.7%）</div>
+            <div>• 图像识别作为快速辅助判断</div>
+            <div>• 建议结合人工判断综合评估</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /help -->
+
+</main>
+</div>
+</div>
+
+<script>
+const {createApp,ref,computed,onMounted,watch,nextTick} = Vue;
+
+createApp({
+  setup(){
+    const page    = ref('detect');
+    const apiBase = ref('http://localhost:5000');
+
+    // ── 连接状态 ───
+    const connected   = ref(false);
+    const connLoading = ref(false);
+    const sysStats    = ref({});
+    const connClass   = computed(()=>({
+      'conn-ok':      connected.value,
+      'conn-err':     !connected.value && !connLoading.value,
+      'conn-loading': connLoading.value,
+    }));
+    const connText = computed(()=>
+      connLoading.value ? '连接中…' : connected.value ? '后端已连接' : '未连接'
+    );
+
+    async function checkConn(){
+      connLoading.value = true;
+      try{
+        const r = await fetch(`${apiBase.value}/api/health`);
+        const d = await r.json();
+        connected.value = d.img_model || d.spec_model;
+      }catch{ connected.value = false; }
+      finally{ connLoading.value = false; }
+    }
+
+    async function loadStats(){
+      try{
+        const r = await fetch(`${apiBase.value}/api/stats`);
+        sysStats.value = await r.json();
+      }catch{}
+    }
+
+    // ── Nav ───
+    const navItems = [
+      {id:'detect',   icon:'🔬', label:'图像识别'},
+      {id:'history',  icon:'📋', label:'历史记录'},
+      {id:'overview', icon:'📊', label:'系统总览'},
+      {id:'help',     icon:'ℹ️',  label:'使用说明'},
+    ];
+
+    // ── 成熟度常量 ───
+    const matNames  = ['未成熟','半成熟','成熟','过成熟'];
+    const matColors = ['#3b82f6','#10b981','#f59e0b','#ef4444'];
+
+    // ── 图像上传 ───
+    const imgFile    = ref(null);
+    const previewUrl = ref('');
+    const dragging   = ref(false);
+    const predicting = ref(false);
+    const imgError   = ref('');
+    const imgResult  = ref(null);
+    const step       = ref(1);
+
+    function stepClass(s){
+      if(step.value > s) return 'step-done';
+      if(step.value === s) return 'step-active';
+      return 'step-wait';
+    }
+    function stepColor(s){
+      if(step.value > s) return '#10b981';
+      if(step.value === s) return '#a78bfa';
+      return '#64748b';
+    }
+
+    function setImg(file){
+      if(!file) return;
+      imgFile.value  = file;
+      previewUrl.value = URL.createObjectURL(file);
+      imgResult.value  = null;
+      imgError.value   = '';
+      step.value       = 1;
+    }
+    function onImgChange(e){ setImg(e.target.files[0]); }
+    function onDrop(e){ dragging.value=false; setImg(e.dataTransfer.files[0]); }
+    function resetImg(){
+      imgFile.value=null; previewUrl.value='';
+      imgResult.value=null; imgError.value=''; step.value=1;
+    }
+
+    async function submitImg(){
+      if(!imgFile.value) return;
+      predicting.value = true;
+      imgError.value   = '';
+      step.value       = 2;
+
+      const fd = new FormData();
+      fd.append('image', imgFile.value);
+
+      try{
+        const r = await fetch(`${apiBase.value}/api/predict/image`,{method:'POST',body:fd});
+        const d = await r.json();
+        if(d.error){ imgError.value = d.error; step.value=1; }
+        else{
+          imgResult.value = d;
+          step.value = 3;
+          // 加入历史
+          history.value.unshift({
+            previewUrl: previewUrl.value,
+            result: d,
+            time: new Date().toLocaleTimeString(),
+          });
+        }
+      }catch(e){
+        imgError.value = '请求失败，请确认后端已启动：'+e.message;
+        step.value = 1;
+      }finally{
+        predicting.value = false;
+      }
+    }
+
+    // ── History ───
+    const history    = ref([]);
+    const histDonut  = ref(null);
+    const histLine   = ref(null);
+    let hdInst=null, hlInst=null;
+
+    function viewHistory(item){
+      previewUrl.value = item.previewUrl;
+      imgFile.value    = {name:'(历史记录)',size:0};
+      imgResult.value  = item.result;
+      step.value       = 3;
+      page.value       = 'detect';
+    }
+
+    watch(page, async(val)=>{
+      if(val!=='history' || history.value.length<2) return;
+      await nextTick();
+      // 饼图
+      if(hdInst){ hdInst.destroy(); }
+      if(histDonut.value){
+        const cnt = [0,0,0,0];
+        history.value.forEach(h=>cnt[h.result.label]++);
+        hdInst = new Chart(histDonut.value,{
+          type:'doughnut',
+          data:{labels:matNames,datasets:[{data:cnt,backgroundColor:matColors,borderWidth:2,borderColor:'#111827'}]},
+          options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+            plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}}}
+        });
+      }
+      // 折线
+      if(hlInst){ hlInst.destroy(); }
+      if(histLine.value){
+        const items = [...history.value].reverse();
+        hlInst = new Chart(histLine.value,{
+          type:'line',
+          data:{
+            labels:items.map((_,i)=>`#${i+1}`),
+            datasets:[{
+              label:'置信度 (%)',
+              data:items.map(h=>+(h.result.confidence*100).toFixed(1)),
+              borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',
+              pointBackgroundColor:items.map(h=>matColors[h.result.label]),
+              pointRadius:6,tension:.3,fill:true,
+            }]
+          },
+          options:{responsive:true,maintainAspectRatio:false,
+            scales:{
+              x:{ticks:{color:'#64748b'},grid:{color:'#1e2d45'}},
+              y:{ticks:{color:'#64748b'},grid:{color:'#1e2d45'},min:0,max:100},
+            },
+            plugins:{legend:{labels:{color:'#94a3b8'}}},
+          }
+        });
+      }
+    });
+
+    // ── 系统总览数据 ───
+    const imgPipeline = [
+      '用户上传 JPG/PNG 葡萄图片',
+      'OpenCV 读取并缩放至 224×224',
+      'HSV 色彩空间转换 + 背景掩码去除',
+      '提取 38 维颜色纹理特征（HSV统计+RGB统计+直方图+Sobel梯度）',
+      '标准化 → VotingClassifier(RF+GBM+SVM) 集成预测',
+      '返回成熟度等级 + 置信度 + 各类概率',
+    ];
+
+    const matDescriptions = [
+      {icon:'🌱',desc:'果实颜色偏绿，含糖量低，硬度高。距最佳采摘期还需14-21天。'},
+      {icon:'🍈',desc:'颜色由绿转黄/红，糖分积累中，7-14天后可采摘。'},
+      {icon:'🍇',desc:'颜色深紫/红，糖度最高，果肉软化适中，为最佳采摘期。'},
+      {icon:'🍷',desc:'颜色接近深紫黑，糖分开始降解，需立即采摘或加工。'},
+    ];
+
+    const colorFeatures = [
+      ['H值：55-80（绿色系）','S值：160-200（高饱和度）','V值：140-175（较亮）'],
+      ['H值：20-45（黄绿/橙）','S值：150-185（中高饱）','V值：120-155（中亮）'],
+      ['H值：145-165（紫红）','S值：140-175（中饱）','V值：95-135（中等）'],
+      ['H值：155-170（深紫）','S值：120-155（中低饱）','V值：65-100（较暗）'],
+    ];
+
+    onMounted(async()=>{
+      await checkConn();
+      await loadStats();
+    });
+
+    return {
+      page, apiBase, connected, connLoading, connClass, connText, sysStats,
+      navItems, matNames, matColors,
+      imgFile, previewUrl, dragging, predicting, imgError, imgResult, step,
+      history, histDonut, histLine,
+      imgPipeline, matDescriptions, colorFeatures,
+      checkConn, onImgChange, onDrop, resetImg, submitImg, viewHistory,
+      stepClass, stepColor,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

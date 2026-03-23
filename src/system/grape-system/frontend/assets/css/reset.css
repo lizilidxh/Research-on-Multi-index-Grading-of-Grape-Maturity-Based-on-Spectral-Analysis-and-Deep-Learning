@@ -1,0 +1,39 @@
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* 全局变量 */
+:root{
+  --bg:#06090f;
+  --surface:#0d1117;
+  --card:#111827;
+  --card2:#161f2e;
+  --border:#1e2d45;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --muted2:#94a3b8;
+  --accent:#7c3aed;
+  --accent2:#a78bfa;
+  --accent3:#ddd6fe;
+  --c0:#3b82f6;
+  --c1:#10b981;
+  --c2:#f59e0b;
+  --c3:#ef4444;
+  --radius:14px;
+  --r-sm:8px;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+}
