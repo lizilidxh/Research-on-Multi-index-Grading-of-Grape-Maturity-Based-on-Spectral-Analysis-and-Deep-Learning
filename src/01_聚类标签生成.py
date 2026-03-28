@@ -25,7 +25,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')                     # 无显示器环境用 Agg 后端
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
@@ -45,7 +45,7 @@ plt.rcParams['figure.dpi'] = 150
 
 # ── 路径配置（相对于项目根目录）─────────────────────────────────────────────
 PROJECT_ROOT   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_FILE      = os.path.join(PROJECT_ROOT, 'data', '高光谱_指标数据.xlsx')
+DATA_FILE      = os.path.join(PROJECT_ROOT, 'data', '高光谱+指标数据.xlsx')
 OUT_CLUSTER    = os.path.join(PROJECT_ROOT, 'results', '聚类结果')
 OUT_VIS        = os.path.join(PROJECT_ROOT, 'results', '可视化图')
 
@@ -57,7 +57,7 @@ MATURITY_NAMES  = ['未成熟', '半成熟', '成熟', '过成熟']
 PALETTE         = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']   # 蓝/绿/橙/红
 INDICATOR_COLS  = ['可溶性固形物（SSC）', '酸碱性（PH）', '果皮硬度（N）', '色差']
 INDICATOR_UNITS = ['°Brix', '', 'N', 'ΔE']
-WEIGHTS_EXPERT  = np.array([0.35, 0.20, 0.25, 0.20])             # 专家权重
+WEIGHTS_EXPERT  = np.array([0.35, 0.20, 0.25, 0.20])             # 建议权重
 
 
 # =============================================================================
@@ -161,28 +161,28 @@ def step2_preprocess(df_idx):
 #  Step 3 · 权重方案分析
 # =============================================================================
 
+#计算最佳权重方案
+
+
 def step3_weight_analysis(X_scaled):
-    section('Step 3 · 指标权重方案分析')
-
-    weights_equal  = np.array([0.25, 0.25, 0.25, 0.25])
-    weights_expert = WEIGHTS_EXPERT
-    print('  ┌─────────────────────┬──────────────┬──────────────┐')
-    print('  │ 指标                │ 等权重方案     │ 方案 │')
-    print('  ├─────────────────────┼──────────────┼──────────────┤')
-    for col, we, wx in zip(INDICATOR_COLS, weights_equal, weights_expert):
-        short = col[:8]
-        print(f'  │ {short:<19} │    {we:.2f}        │    {wx:.2f}        │')
-    print('  └─────────────────────┴──────────────┴──────────────┘')
-    print('\n  权重依据：')
-    print('    SSC(0.35)  ── 糖度是葡萄成熟最直接指标，变化幅度最大(5.3~23.7°Brix)')
-    print('    硬度(0.25) ── 成熟过程中细胞壁果胶降解，硬度显著降低')
-    print('    PH(0.20)   ── 有机酸含量随成熟降低，PH升高')
-    print('    色差(0.20) ── 果皮颜色呈现规律性变化，辅助判断')
-
-    # 权重
-    X_weighted = X_scaled * weights_expert
-    print(f'\n  加权后数据形状: {X_weighted.shape}')
-    return X_weighted, weights_equal
+    section('Step 3 · 基于建议权重计算')
+    
+    # 使用预定义的专家权重方案
+    entropy_weights = WEIGHTS_EXPERT
+    
+    print('\n  ★ 采用建议权重的客观权重进行后续聚类分析')
+    print(f'  各指标权重配置:')
+    
+    weights_list = entropy_weights.tolist() if hasattr(entropy_weights, 'tolist') else list(entropy_weights)
+    for i in range(len(INDICATOR_COLS)):
+        col = INDICATOR_COLS[i]
+        w = weights_list[i]
+        print(f'    {col}: {w:.4f} ({w*100:.1f}%)')
+    
+    X_weighted = X_scaled * entropy_weights
+    print(f'\n  加权后数据形状：{X_weighted.shape}')
+    
+    return X_weighted, entropy_weights
 
 
 # =============================================================================
