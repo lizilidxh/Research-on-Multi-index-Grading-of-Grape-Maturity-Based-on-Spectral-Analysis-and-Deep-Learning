@@ -132,11 +132,11 @@ def msc(X):
 
 
 # =============================================================================
-#  Step 1 · 数据加载
+#  Step 1 .数据加载
 # =============================================================================
 
 def step1_load(filepath, idx_filepath):
-    section('Step 1 · 加载聚类标签数据集')
+    section('Step 1 .加载聚类标签数据集')
 
     df      = pd.read_csv(filepath)
     df_idx  = pd.read_csv(idx_filepath)
@@ -167,11 +167,11 @@ def step1_load(filepath, idx_filepath):
 
 
 # =============================================================================
-#  Step 2 · 原始光谱可视化
+#  Step 2 .原始光谱可视化
 # =============================================================================
 
 def step2_plot_raw(X_raw, y, wavelengths):
-    section('Step 2 · 原始光谱可视化')
+    section('Step 2 .原始光谱可视化')
 
     fig = plt.figure(figsize=(15, 10))
     gs  = gridspec.GridSpec(2, 2, figure=fig, hspace=0.38, wspace=0.3)
@@ -242,11 +242,11 @@ def step2_plot_raw(X_raw, y, wavelengths):
 
 
 # =============================================================================
-#  Step 3 · 应用各种预处理方案
+#  Step 3 .应用各种预处理方案
 # =============================================================================
 
 def step3_preprocess(X_raw):
-    section('Step 3 · 应用预处理算法')
+    section('Step 3 .应用预处理算法')
 
     # 方案A：SG 平滑
     print(f'  [A] SG平滑  window={SG_WINDOW}, polyorder={SG_POLYORDER} ...', end='')
@@ -269,11 +269,11 @@ def step3_preprocess(X_raw):
 
 
 # =============================================================================
-#  Step 4 · 预处理效果可视化对比
+#  Step 4 .预处理效果可视化对比
 # =============================================================================
 
 def step4_compare_visualization(X_raw, X_sg, X_sg_snv, X_sg_msc, wavelengths, y):
-    section('Step 4 · 预处理效果可视化对比')
+    section('Step 4 .预处理效果可视化对比')
 
     # ── 图A：单样本四种处理对比 ──
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
@@ -354,11 +354,11 @@ def step4_compare_visualization(X_raw, X_sg, X_sg_snv, X_sg_msc, wavelengths, y)
 
 
 # =============================================================================
-#  Step 5 · 定量评估：与理化指标的相关性
+#  Step 5 .定量评估：与理化指标的相关性
 # =============================================================================
 
 def step5_correlation_evaluation(X_raw, X_sg, X_sg_snv, X_sg_msc, X_idx, wavelengths):
-    section('Step 5 · 定量评估：光谱与理化指标相关性')
+    section('Step 5 .定量评估：光谱与理化指标相关性')
 
     schemes = {
         'Raw':        X_raw,
@@ -428,11 +428,11 @@ def step5_correlation_evaluation(X_raw, X_sg, X_sg_snv, X_sg_msc, X_idx, wavelen
 
 
 # =============================================================================
-#  Step 6 · PCA 特征降维
+#  Step 6 .PCA 特征降维
 # =============================================================================
 
 def step6_pca(X_sg_snv, y, wavelengths):
-    section('Step 6 · PCA 特征降维')
+    section('Step 6 .PCA 特征降维')
 
     # 先做标准化（PCA前必须）
     scaler = StandardScaler()
@@ -529,11 +529,11 @@ def step6_pca(X_sg_snv, y, wavelengths):
 
 
 # =============================================================================
-#  Step 7 · 关键波段分析
+#  Step 7 .关键波段分析
 # =============================================================================
 
 def step7_key_wavelengths(X_sg_snv, X_idx, y, wavelengths, pca):
-    section('Step 7 · 关键波段分析')
+    section('Step 7 .关键波段分析')
 
     # ── 基于PC1 Loading 找关键波段 ──
     loading_pc1 = np.abs(pca.components_[0])
@@ -589,12 +589,12 @@ def step7_key_wavelengths(X_sg_snv, X_idx, y, wavelengths, pca):
 
 
 # =============================================================================
-#  Step 8 · 保存所有预处理结果
+#  Step 8 .保存所有预处理结果
 # =============================================================================
 
 def step8_save(X_sg_snv, X_pca, y, pca, scaler,
                n_components, corr_results, key_wavelengths):
-    section('Step 8 · 保存预处理结果')
+    section('Step 8 .保存预处理结果')
 
     # numpy 数组
     np.save(os.path.join(OUT_MODEL, 'X_preprocessed.npy'), X_sg_snv)
@@ -687,33 +687,33 @@ def step8_save(X_sg_snv, X_pca, y, pca, scaler,
 
 def main():
     print('\n' + '=' * 62)
-    print('  葡萄成熟度识别 · 第二阶段：高光谱数据预处理与特征提取')
+    print('  葡萄成熟度识别 .第二阶段：高光谱数据预处理与特征提取')
     print('=' * 62)
 
-    # Step 1 · 加载数据
+    # Step 1 .加载数据
     X_raw, y, wavelengths, X_idx = step1_load(INPUT_FILE, IDX_FILE)
 
-    # Step 2 · 原始光谱可视化
+    # Step 2 .原始光谱可视化
     step2_plot_raw(X_raw, y, wavelengths)
 
-    # Step 3 · 预处理
+    # Step 3 .预处理
     X_sg, X_sg_snv, X_sg_msc= step3_preprocess(X_raw)
 
-    # Step 4 · 可视化对比
+    # Step 4 .可视化对比
     step4_compare_visualization(X_raw, X_sg, X_sg_snv, X_sg_msc,
                                  wavelengths, y)
 
-    # Step 5 · 定量评估
+    # Step 5 .定量评估
     corr_results = step5_correlation_evaluation(
         X_raw, X_sg, X_sg_snv, X_sg_msc, X_idx, wavelengths)
 
-    # Step 6 · PCA 降维
+    # Step 6 .PCA 降维
     X_pca, pca, scaler, n_components = step6_pca(X_sg_snv, y, wavelengths)
 
-    # Step 7 · 关键波段
+    # Step 7 .关键波段
     key_wls = step7_key_wavelengths(X_sg_snv, X_idx, y, wavelengths, pca)
 
-    # Step 8 · 保存
+    # Step 8 .保存
     step8_save(X_sg_snv, X_pca, y, pca, scaler,
                n_components, corr_results, key_wls)
 
