@@ -1,7 +1,4 @@
 # =============================================================================
-#  葡萄成熟度识别 —— 第二阶段：高光谱数据预处理与特征提取
-#  文件：src/02_光谱预处理.py
-#
 #  算法流程：
 #    1. 加载聚类标签数据集（第一阶段输出）
 #    2. 原始光谱可视化（观察噪声/基线漂移）
@@ -132,16 +129,6 @@ def msc(X):
         X_msc[i] = (X[i] - a) / (b + 1e-10)
     return X_msc
 
-
-def first_derivative(X, window=11, polyorder=3):
-    """
-    一阶导数（SG求导）
-    ──────────────────
-    原理：在SG平滑的基础上同时计算导数，消除基线漂移（常数偏移）。
-          deriv=1 表示一阶导数。
-    """
-    return savgol_filter(X, window_length=window,
-                         polyorder=polyorder, deriv=1, axis=1)
 
 
 # =============================================================================
@@ -276,21 +263,16 @@ def step3_preprocess(X_raw):
     X_sg_msc = msc(X_sg)
     print(' ✓')
 
-    # 方案D：一阶导数（对比方案）
-    print(f'  [D] SG 一阶导数 ...', end='')
-    X_deriv = first_derivative(X_raw)
-    print(' ✓')
 
     print(f'\n  所有方案形状: {X_sg_snv.shape}  (与原始相同)')
-    return X_sg, X_sg_snv, X_sg_msc, X_deriv
+    return X_sg, X_sg_snv, X_sg_msc
 
 
 # =============================================================================
 #  Step 4 · 预处理效果可视化对比
 # =============================================================================
 
-def step4_compare_visualization(X_raw, X_sg, X_sg_snv, X_sg_msc,
-                                 X_deriv, wavelengths, y):
+def step4_compare_visualization(X_raw, X_sg, X_sg_snv, X_sg_msc, wavelengths, y):
     section('Step 4 · 预处理效果可视化对比')
 
     # ── 图A：单样本四种处理对比 ──
@@ -375,8 +357,7 @@ def step4_compare_visualization(X_raw, X_sg, X_sg_snv, X_sg_msc,
 #  Step 5 · 定量评估：与理化指标的相关性
 # =============================================================================
 
-def step5_correlation_evaluation(X_raw, X_sg, X_sg_snv, X_sg_msc,
-                                  X_deriv, X_idx, wavelengths):
+def step5_correlation_evaluation(X_raw, X_sg, X_sg_snv, X_sg_msc, X_idx, wavelengths):
     section('Step 5 · 定量评估：光谱与理化指标相关性')
 
     schemes = {
@@ -384,7 +365,6 @@ def step5_correlation_evaluation(X_raw, X_sg, X_sg_snv, X_sg_msc,
         'SG':         X_sg,
         'SG+SNV':     X_sg_snv,
         'SG+MSC':     X_sg_msc,
-        'SG+Deriv1':  X_deriv,
     }
 
     print(f'\n  {"方案":<12}', end='')
@@ -717,15 +697,15 @@ def main():
     step2_plot_raw(X_raw, y, wavelengths)
 
     # Step 3 · 预处理
-    X_sg, X_sg_snv, X_sg_msc, X_deriv = step3_preprocess(X_raw)
+    X_sg, X_sg_snv, X_sg_msc= step3_preprocess(X_raw)
 
     # Step 4 · 可视化对比
     step4_compare_visualization(X_raw, X_sg, X_sg_snv, X_sg_msc,
-                                 X_deriv, wavelengths, y)
+                                 wavelengths, y)
 
     # Step 5 · 定量评估
     corr_results = step5_correlation_evaluation(
-        X_raw, X_sg, X_sg_snv, X_sg_msc, X_deriv, X_idx, wavelengths)
+        X_raw, X_sg, X_sg_snv, X_sg_msc, X_idx, wavelengths)
 
     # Step 6 · PCA 降维
     X_pca, pca, scaler, n_components = step6_pca(X_sg_snv, y, wavelengths)

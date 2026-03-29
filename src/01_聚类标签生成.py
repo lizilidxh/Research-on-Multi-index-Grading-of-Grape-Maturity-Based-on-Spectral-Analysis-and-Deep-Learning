@@ -1,6 +1,5 @@
 # =============================================================================
 #  葡萄成熟度识别 —— 第一阶段：多指标聚类标签生成
-#  文件：src/01_聚类标签生成.py
 #  功能：
 #    1. 加载并探索指标数据
 #    2. 缺失值处理 + 标准化
@@ -57,7 +56,7 @@ MATURITY_NAMES  = ['未成熟', '半成熟', '成熟', '过成熟']
 PALETTE         = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']   # 蓝/绿/橙/红
 INDICATOR_COLS  = ['可溶性固形物（SSC）', '酸碱性（PH）', '果皮硬度（N）', '色差']
 INDICATOR_UNITS = ['°Brix', '', 'N', 'ΔE']
-WEIGHTS_EXPERT  = np.array([0.35, 0.20, 0.25, 0.20])             # 建议权重
+WEIGHTS_SUGGESTED= np.array([0.35, 0.20, 0.25, 0.20])             # 建议权重
 
 
 # =============================================================================
@@ -168,7 +167,7 @@ def step3_weight_analysis(X_scaled):
     section('Step 3 · 基于建议权重计算')
     
     # 使用预定义的专家权重方案
-    entropy_weights = WEIGHTS_EXPERT
+    entropy_weights = WEIGHTS_SUGGESTED
     
     print('\n  ★ 采用建议权重的客观权重进行后续聚类分析')
     print(f'  各指标权重配置:')
@@ -438,7 +437,7 @@ def step9_pca_visualization(X_weighted, maturity_labels):
             ymin, ymax = X_2d[:, 1].min(), X_2d[:, 1].max()
             xx, yy = np.mgrid[xmin:xmax:80j, ymin:ymax:80j]
             pos = np.vstack([xx.ravel(), yy.ravel()])
-            kde = gaussian_kde(pts.T, bw_method=0.3)
+            kde = gaussian_kde(pts.T, bw_method=0.7)
             z = kde(pos).reshape(xx.shape)
             ax2.contour(xx, yy, z, levels=4, colors=[color], alpha=0.75,
                         linewidths=1.5)
@@ -511,7 +510,7 @@ def step10_save_results(df_idx, df_spec, X_filled,
         '',
         '【权重方案】',
     ]
-    for col, w in zip(INDICATOR_COLS, WEIGHTS_EXPERT):
+    for col, w in zip(INDICATOR_COLS, WEIGHTS_SUGGESTED):
         report_lines.append(f'  {col}: {w:.2f}')
     report_lines += [
         '',
