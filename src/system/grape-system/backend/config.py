@@ -6,8 +6,8 @@ import os
 # ── 路径配置 ─────────────────────────────────────────────────────────────────
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(BACKEND_DIR)))
-MODEL_DIR = os.path.join(PROJECT_ROOT, 'results', '模型结果')
-DATA_DIR = os.path.join(PROJECT_ROOT, 'results', '聚类结果')
+MODEL_DIR = os.path.join(PROJECT_ROOT, 'results', 'models')
+DATA_DIR = os.path.join(PROJECT_ROOT, 'results', 'cluster')
 IMG_MODEL_PATH = os.path.join(MODEL_DIR, 'image_classifier.pkl')
 
 # ── 业务常量 ─────────────────────────────────────────────────────────────────

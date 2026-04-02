@@ -1,0 +1,8 @@
+{
+  "name": "CNN-LSTM",
+  "save_file": "torch_cnn_lstm.pt",
+  "accuracy": 0.8865740740740741,
+  "f1": 0.8874049897674781,
+  "in_dim": 728,
+  "n_params": 1057692
+}

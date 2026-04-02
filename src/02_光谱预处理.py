@@ -10,13 +10,13 @@
 #    8. 保存预处理结果（供第三阶段建模使用）
 #
 #  输出文件：
-#    results/模型结果/X_preprocessed.npy   ← SG+SNV 预处理后原始光谱
-#    results/模型结果/X_pca.npy            ← PCA 降维后特征（SVM/BP用）
-#    results/模型结果/y_labels.npy         ← 成熟度标签
-#    results/模型结果/pca_model.pkl        ← PCA 模型（系统部署用）
-#    results/模型结果/scaler_spec.pkl      ← 光谱标准化器
-#    results/可视化图/02_*.png             ← 所有可视化图
-#    results/模型结果/预处理质量报告.txt
+#    results/models/X_preprocessed.npy   ← SG+SNV 预处理后原始光谱
+#    results/models/X_pca.npy            ← PCA 降维后特征（SVM/BP用）
+#    results/models/y_labels.npy         ← 成熟度标签
+#    results/models/pca_model.pkl        ← PCA 模型（系统部署用）
+#    results/models/scaler_spec.pkl      ← 光谱标准化器
+#    results/charts/02_*.png             ← 所有可视化图
+#    results/models/预处理质量报告.txt
 # =============================================================================
 
 import os
@@ -44,10 +44,10 @@ plt.rcParams['figure.dpi'] = 150
 
 # ── 路径配置 ──────────────────────────────────────────────────────────────────
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-INPUT_FILE   = os.path.join(PROJECT_ROOT, 'results', '聚类结果', '聚类标签数据集.csv')
-IDX_FILE     = os.path.join(PROJECT_ROOT, 'results', '聚类结果', '指标数据_含标签.csv')
-OUT_MODEL    = os.path.join(PROJECT_ROOT, 'results', '模型结果')
-OUT_VIS      = os.path.join(PROJECT_ROOT, 'results', '可视化图')
+INPUT_FILE   = os.path.join(PROJECT_ROOT, 'results', 'cluster', '聚类标签数据集.csv')
+IDX_FILE     = os.path.join(PROJECT_ROOT, 'results', 'cluster', '指标数据_含标签.csv')
+OUT_MODEL    = os.path.join(PROJECT_ROOT, 'results', 'models')
+OUT_VIS      = os.path.join(PROJECT_ROOT, 'results', 'charts')
 os.makedirs(OUT_MODEL, exist_ok=True)
 os.makedirs(OUT_VIS,   exist_ok=True)
 
@@ -718,8 +718,8 @@ def main():
                n_components, corr_results, key_wls)
 
     section('全部完成！下一步：运行 03_预测模型构建.py')
-    print('  生成图片: results/可视化图/02_*.png')
-    print('  建模数据: results/模型结果/X_pca.npy  X_preprocessed.npy\n')
+    print('  生成图片: results/charts/02_*.png')
+    print('  建模数据: results/models/X_pca.npy  X_preprocessed.npy\n')
 
 
 if __name__ == '__main__':

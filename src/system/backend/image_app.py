@@ -35,8 +35,8 @@ warnings.filterwarnings('ignore')
 # ── 路径 ──────────────────────────────────────────────────────────────────────
 BACKEND_DIR  = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(BACKEND_DIR)))
-MODEL_DIR    = os.path.join(PROJECT_ROOT, 'results', '模型结果')
-DATA_DIR     = os.path.join(PROJECT_ROOT, 'results', '聚类结果')
+MODEL_DIR    = os.path.join(PROJECT_ROOT, 'results', 'models')
+DATA_DIR     = os.path.join(PROJECT_ROOT, 'results', 'cluster')
 IMG_MODEL_PATH = os.path.join(MODEL_DIR, 'image_classifier.pkl')
 
 app = Flask(__name__)
@@ -233,7 +233,7 @@ def train_image_classifier():
     model_pkg = {'clf': clf, 'scaler': scaler, 'n_features': X.shape[1]}
     with open(IMG_MODEL_PATH, 'wb') as f:
         pickle.dump(model_pkg, f)
-    print(f'  [图像分类器] 已保存 → results/模型结果/image_classifier.pkl')
+    print(f'  [图像分类器] 已保存 → results/models/image_classifier.pkl')
     return model_pkg, acc, cv5.mean(), cv5.std()
 
 

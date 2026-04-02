@@ -9,13 +9,13 @@
 #    6. 聚类结果分析与可视化
 #    7. 保存最终带标签的完整数据集
 #  输出：
-#    results/聚类结果/聚类标签数据集.csv   ← 后续所有阶段使用这个文件
-#    results/可视化图/01_指标分布.png
-#    results/可视化图/01_肘部法则.png
-#    results/可视化图/01_聚类PCA可视化.png
-#    results/可视化图/01_各指标箱线图.png
-#    results/可视化图/01_相关系数热力图.png
-#    results/聚类结果/聚类质量报告.txt
+#    results/cluster/聚类标签数据集.csv   ← 后续所有阶段使用这个文件
+#    results/charts/01_指标分布.png
+#    results/charts/01_肘部法则.png
+#    results/charts/01_聚类PCA可视化.png
+#    results/charts/01_各指标箱线图.png
+#    results/charts/01_相关系数热力图.png
+#    results/cluster/聚类质量报告.txt
 # =============================================================================
 
 import os
@@ -45,8 +45,8 @@ plt.rcParams['figure.dpi'] = 150
 # ── 路径配置（相对于项目根目录）─────────────────────────────────────────────
 PROJECT_ROOT   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_FILE      = os.path.join(PROJECT_ROOT, 'data', '高光谱+指标数据.xlsx')
-OUT_CLUSTER    = os.path.join(PROJECT_ROOT, 'results', '聚类结果')
-OUT_VIS        = os.path.join(PROJECT_ROOT, 'results', '可视化图')
+OUT_CLUSTER    = os.path.join(PROJECT_ROOT, 'results', 'cluster')
+OUT_VIS        = os.path.join(PROJECT_ROOT, 'results', 'charts')
 
 os.makedirs(OUT_CLUSTER, exist_ok=True)
 os.makedirs(OUT_VIS,     exist_ok=True)
@@ -72,7 +72,7 @@ def section(title):
 
 
 def save_fig(fig, name):
-    """保存图片到 results/可视化图/"""
+    """保存图片到 results/charts/"""
     path = os.path.join(OUT_VIS, name)
     fig.savefig(path, bbox_inches='tight', dpi=150)
     plt.close(fig)
@@ -600,9 +600,9 @@ def main():
                         sil_k4, db_k4, ch_k4)
 
     section('全部完成！下一步：运行 02_光谱预处理.py')
-    print('  生成的图片在: results/可视化图/')
-    print('  生成的数据在: results/聚类结果/')
-    print('  后续代码读取: results/聚类结果/聚类标签数据集.csv\n')
+    print('  生成的图片在: results/charts/')
+    print('  生成的数据在: results/cluster/')
+    print('  后续代码读取: results/cluster/聚类标签数据集.csv\n')
 
 
 if __name__ == '__main__':
