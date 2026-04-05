@@ -862,9 +862,9 @@ def step5_visualize(name, m_base, m_opt, m_ens,
 
     c_base, c_opt, c_ens = '#94A3B8', '#3B82F6', '#10B981'
 
-    # ── 图1：四指标优化对比柱状图 ─────────────────────────────────────────────
-    all_m    = {'基线': m_base, '优化后': m_opt}
-    if m_ens: all_m['5折集成'] = m_ens
+    # ── Figure 1: Bar chart comparing four optimization metrics ─────────────────────────────────────────────
+    all_m    = {'Baseline': m_base, 'Optimized': m_opt}
+    if m_ens: all_m['5-Fold Ensemble'] = m_ens
     labels   = list(all_m.keys())
     colors   = [c_base, c_opt, c_ens][:len(labels)]
     metrics  = [('accuracy','Accuracy'), ('f1','F1 Score'),
